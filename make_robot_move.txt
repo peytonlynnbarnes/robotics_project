@@ -1,0 +1,12 @@
+ros2 topic pub /diff_drive_controller/cmd_vel geometry_msgs/msg/TwistStamped \
+"{header: {frame_id: '', stamp: {sec: 0, nanosec: 0}}, twist: {linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.3}}}" -r 10
+
+colcon build --symlink-install
+source install/setup.bash
+ros2 launch sim_bot sim_gazebo.launch.py
+
+pkill -f gz
+pkill -f ros2_control_node
+pkill -f controller_manager
+pkill -f robot_state_publisher
+pkill -f spawner
