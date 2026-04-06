@@ -3,13 +3,40 @@
 
   <xacro:include filename="$(find sim_bot)/description/inertial_macros.xacro"/>
     
-  <xacro:macro name="full_wheel" params="name parent origin rpy axis">
+  <xacro:macro name="left_wheel" params="name parent origin rpy">
 
     <joint name="${name}_joint" type="continuous">
       <parent link="${parent}"/>
       <child link="${name}"/>
       <origin xyz="${origin}" rpy="${rpy}"/>
       <axis xyz="0 0 1"/>
+    </joint>
+
+    <link name="${name}">
+      <visual>
+        <geometry>
+          <cylinder radius="0.08255" length="0.04"/>
+        </geometry>
+        <material name="blue"/>
+      </visual>
+
+      <collision>
+        <geometry>
+          <cylinder radius="0.08255" length="0.04"/>
+        </geometry>
+      </collision>
+
+      <xacro:inertial_cylinder mass="0.1" radius="0.08255" length="0.04"/>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="right_wheel" params="name parent origin rpy">
+
+    <joint name="${name}_joint" type="continuous">
+      <parent link="${parent}"/>
+      <child link="${name}"/>
+      <origin xyz="${origin}" rpy="${rpy}"/>
+      <axis xyz="0 0 -1"/>
     </joint>
 
     <link name="${name}">
@@ -82,33 +109,29 @@
       </inertial>
     </link>
 
-  <xacro:full_wheel
+  <xacro:left_wheel
     name="left_rear_wheel"
     parent="chassis"
     origin="${left_rear_wheel_pos}"
-    rpy="${-(M_PI/2)} 0 0"
-    axis="0 0 1"/>
+    rpy="${-(M_PI/2)} 0 0"/>
 
-  <xacro:full_wheel
+  <xacro:right_wheel
     name="right_rear_wheel"
     parent="chassis"
     origin="${right_rear_wheel_pos}"
-    rpy="${M_PI/2} 0 0"
-    axis="0 0 -1"/>
+    rpy="${M_PI/2} 0 0"/>
 
-  <xacro:full_wheel
+  <xacro:left_wheel
     name="left_front_wheel"
     parent="chassis"
     origin="${left_front_wheel_pos}"
-    rpy="${-(M_PI/2)} 0 0"
-    axis="0 0 1"/>
+    rpy="${-(M_PI/2)} 0 0"/>
 
-  <xacro:full_wheel
+  <xacro:right_wheel
     name="right_front_wheel"
     parent="chassis"
     origin="${right_front_wheel_pos}"
-    rpy="${M_PI/2} 0 0"
-    axis="0 0 -1"/>
+    rpy="${M_PI/2} 0 0"/>
 
     <gazebo reference="chassis">
       <material>Gazebo/White</material>
