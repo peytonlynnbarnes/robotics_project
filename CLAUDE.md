@@ -49,7 +49,7 @@ pkill -f gz; pkill -f slam_toolbox; pkill -f rviz2; pkill -f ros2_control_node; 
 
 ### Package: sim_bot (`src/sim_bot/`)
 
-Build system: ament_cmake via colcon. No custom C++/Python nodes — the package is entirely launch files, xacro descriptions, and config.
+Build system: ament_cmake via colcon. One custom Python node (`scripts/waypoint_navigator.py`) for named-room navigation.
 
 **Robot description** (`description/`): Xacro files composing the URDF.
 - `robot.urdf.xacro` — top-level, includes all others and instantiates each macro
@@ -65,9 +65,15 @@ Build system: ament_cmake via colcon. No custom C++/Python nodes — the package
 
 **Composite launches**:
 - `sim_teleop.launch.py` — `sim_gazebo` + `teleop_twist_keyboard` (xterm prefix, `stamped:=true`, remapped to `/diff_drive_controller/cmd_vel`)
-- `sim_slam.launch.py` — `sim_gazebo` + `async_slam_toolbox_node` + `rviz2` (loads `config/slam.rviz`)
+- `sim_slam.launch.py` — `sim_gazebo` + `async_slam_toolbox_node` (lifecycle: auto-configure+activate) + `rviz2` (loads `config/slam.rviz`)
+- `sim_full.launch.py` — `sim_gazebo` + SLAM + RViz (no teleop)
+- `sim_nav.launch.py` — `sim_gazebo` + Nav2 stack (map_server, AMCL, planner, controller, BT navigator, behavior server, lifecycle_manager) + waypoint_navigator + RViz (loads `config/nav.rviz`). Accepts `map:=<path>` argument.
 
-**Controller config** (`config/controllers.yaml`): Diff drive with wheel_separation=0.30m, wheel_radius=0.05m, publish_rate=50Hz. Left wheels: `[left_front_wheel_joint, left_rear_wheel_joint]`, right wheels: `[right_front_wheel_joint, right_rear_wheel_joint]`. **`base_frame_id: base_link`** — the standard ROS convention. Anything that needs the robot base frame (slam_toolbox, nav2) must use `base_link`.
+**World files** (`worlds/`):
+- `empty.world` — bare ground plane with Sensors plugin (for testing)
+- `house.world` — 10×8m house with 4 rooms (living room, kitchen, bedroom, bathroom), central hallway, and furniture. `sim_gazebo.launch.py` defaults to `house.world`; override with `world:=empty.world`.
+
+**Controller config** (`config/controllers.yaml`): Diff drive with wheel_separation=0.35m, wheel_radius=0.08255m, publish_rate=50Hz. Left wheels: `[left_front_wheel_joint, left_rear_wheel_joint]`, right wheels: `[right_front_wheel_joint, right_rear_wheel_joint]`. **`base_frame_id: base_link`** — the standard ROS convention. Anything that needs the robot base frame (slam_toolbox, nav2) must use `base_link`.
 
 ### Sensors
 
@@ -75,7 +81,11 @@ Build system: ament_cmake via colcon. No custom C++/Python nodes — the package
 
 ### SLAM
 
-`slam_toolbox` async online mode, configured in `config/slam_params.yaml`. The `diff_drive_controller` already provides `odom → chassis`; slam_toolbox produces `map → odom`. **`base_frame: base_link`** in `slam_params.yaml` must match the controller's `base_frame_id` or TF resolution will fail.
+`slam_toolbox` async online mode, configured in `config/slam_params.yaml`. In ROS 2 Jazzy, slam_toolbox is a **lifecycle node** — launch files must configure and activate it (see `sim_slam.launch.py` for the pattern). The `diff_drive_controller` provides `odom → base_link`; slam_toolbox produces `map → odom`. **`base_frame: base_link`** in `slam_params.yaml` must match the controller's `base_frame_id` or TF resolution will fail.
+
+### Navigation (Nav2)
+
+`sim_nav.launch.py` launches the full Nav2 stack for autonomous navigation to named rooms. Requires a saved map (run SLAM first, then `ros2 run nav2_map_server map_saver_cli -f src/sim_bot/maps/house_map`). The `waypoint_navigator` node subscribes to `/go_to_room` (std_msgs/String) and sends NavigateToPose action goals. Waypoint coordinates are in `config/waypoints.yaml` — adjust after mapping. Nav2's controller_server cmd_vel is remapped to `/diff_drive_controller/cmd_vel`.
 
 ### Package: face_recognition (`src/face_recognition/`)
 
@@ -87,8 +97,9 @@ Placeholder — currently empty.
 - `/diff_drive_controller/odom` — odometry output
 - `/joint_states` — wheel positions/velocities
 - `/scan` (LaserScan) — lidar output, frame_id `laser_frame`
-- `/map` (OccupancyGrid) — slam_toolbox output (only when sim_slam launched)
-- `/tf`, `/tf_static` — transform tree (`map → odom → chassis → wheels`, `chassis → laser_frame`)
+- `/map` (OccupancyGrid) — slam_toolbox or map_server output
+- `/go_to_room` (String) — send room name to waypoint_navigator (e.g. "kitchen")
+- `/tf`, `/tf_static` — transform tree (`map → odom → base_link → chassis → wheels`, `chassis → laser_frame`)
 
 ## Wheel Geometry
 

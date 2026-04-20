@@ -3,9 +3,15 @@ import os
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, RegisterEventHandler
+from launch.actions import (
+    DeclareLaunchArgument,
+    IncludeLaunchDescription,
+    RegisterEventHandler,
+)
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.event_handlers import OnProcessExit
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch_ros.substitutions import FindPackageShare
 
 from launch_ros.actions import Node
 
@@ -24,14 +30,22 @@ def generate_launch_description():
         launch_arguments={'use_sim_time': 'true'}.items()
     )
 
-    # Start Gazebo with custom world (includes Sensors system plugin for gpu_lidar)
-    world_file = os.path.join(pkg_sim_bot, 'worlds', 'empty.world')
+    # World file selection (default: house.world)
+    declare_world = DeclareLaunchArgument(
+        'world', default_value='house.world',
+        description='World file name in sim_bot/worlds/',
+    )
+    world_file = PathJoinSubstitution([
+        FindPackageShare('sim_bot'), 'worlds', LaunchConfiguration('world')
+    ])
+
+    # Start Gazebo (world must include Sensors system plugin for gpu_lidar)
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')
         ),
         launch_arguments={
-            'gz_args': f'-r {world_file}'
+            'gz_args': ['-r ', world_file]
         }.items()
     )
 
@@ -101,6 +115,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        declare_world,
         gazebo,
         clock_bridge,
         lidar_bridge,

@@ -1,0 +1,25 @@
+waypoint_navigator:
+  ros__parameters:
+    waypoint_names: [living_room, kitchen, bedroom, bathroom, hallway]
+    # Coordinates are in the map frame.
+    # Adjust these after mapping — use RViz "Publish Point" to read coords.
+    living_room:
+      x: -2.5
+      y: -1.5
+      yaw: 0.0
+    kitchen:
+      x: 2.5
+      y: -1.5
+      yaw: 0.0
+    bedroom:
+      x: -2.5
+      y: 1.5
+      yaw: 0.0
+    bathroom:
+      x: 2.5
+      y: 1.5
+      yaw: 0.0
+    hallway:
+      x: 0.0
+      y: 0.0
+      yaw: 0.0

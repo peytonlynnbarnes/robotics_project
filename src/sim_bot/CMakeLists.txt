@@ -33,8 +33,14 @@ if(BUILD_TESTING)
 endif()
 
 install(
-  DIRECTORY config description launch worlds
+  DIRECTORY config description launch maps worlds
   DESTINATION share/${PROJECT_NAME}
+)
+
+install(
+  PROGRAMS scripts/waypoint_navigator.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME waypoint_navigator
 )
 
 ament_package()
