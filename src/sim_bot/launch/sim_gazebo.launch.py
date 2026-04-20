@@ -24,13 +24,14 @@ def generate_launch_description():
         launch_arguments={'use_sim_time': 'true'}.items()
     )
 
-    # Start Gazebo
+    # Start Gazebo with custom world (includes Sensors system plugin for gpu_lidar)
+    world_file = os.path.join(pkg_sim_bot, 'worlds', 'empty.world')
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_ros_gz_sim, 'launch', 'gz_sim.launch.py')
         ),
         launch_arguments={
-            'gz_args': '-r empty.sdf'
+            'gz_args': f'-r {world_file}'
         }.items()
     )
 
@@ -91,9 +92,18 @@ def generate_launch_description():
         output='screen'
     )
 
+    # Bridge the lidar /scan topic from Gazebo to ROS2 (one-way: gz -> ros)
+    lidar_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        arguments=['/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan'],
+        output='screen'
+    )
+
     return LaunchDescription([
         gazebo,
         clock_bridge,
+        lidar_bridge,
         rsp_launch,
         spawn_entity,
         delay_joint_state_broadcaster_after_spawn,
