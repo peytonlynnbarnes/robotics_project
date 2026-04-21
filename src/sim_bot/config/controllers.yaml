@@ -9,6 +9,17 @@ controller_manager:
     diff_drive_controller:
       type: diff_drive_controller/DiffDriveController
 
+joint_state_broadcaster:
+  ros__parameters:
+    joints:
+      - left_front_wheel_joint
+      - left_rear_wheel_joint
+      - right_front_wheel_joint
+      - right_rear_wheel_joint
+    interfaces:
+      - position
+      - velocity
+
 diff_drive_controller:
   ros__parameters:
     left_wheel_names: ["left_front_wheel_joint", "left_rear_wheel_joint"]
@@ -20,5 +31,6 @@ diff_drive_controller:
     publish_rate: 50.0
     odom_frame_id: odom
     base_frame_id: base_link
+    enable_odom_tf: false
 
     use_stamped_vel: false

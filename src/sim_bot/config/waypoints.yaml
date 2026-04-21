@@ -1,24 +1,35 @@
 waypoint_navigator:
   ros__parameters:
     waypoint_names: [living_room, kitchen, bedroom, bathroom, hallway]
-    # Coordinates are in the map frame.
-    # Adjust these after mapping — use RViz "Publish Point" to read coords.
+    # Coordinates are in the map frame (== world frame, since robot spawns at origin).
+    # Each waypoint sits clear of walls/furniture so Nav2 can reach it without bumping
+    # the costmap inflation. yaw is in radians (0 = facing +x).
+
+    # Living room (SW quadrant). South of hallway door, north of coffee table.
     living_room:
       x: -2.5
-      y: -1.5
-      yaw: 0.0
+      y: -1.4
+      yaw: -1.5708   # face south, into the room
+
+    # Kitchen (SE quadrant). East of kitchen table, south of fridge.
     kitchen:
-      x: 2.5
-      y: -1.5
-      yaw: 0.0
+      x: 3.2
+      y: -1.7
+      yaw: -1.5708
+
+    # Bedroom (NW quadrant). East of bed, just past hallway door.
     bedroom:
-      x: -2.5
+      x: -1.5
       y: 1.5
-      yaw: 0.0
+      yaw: 1.5708    # face north, into the room
+
+    # Bathroom (NE quadrant). Past hallway door, south of bathtub, west of sink cabinet.
     bathroom:
-      x: 2.5
-      y: 1.5
-      yaw: 0.0
+      x: 2.3
+      y: 1.8
+      yaw: 1.5708
+
+    # Hallway center — useful as a "home" / passthrough waypoint.
     hallway:
       x: 0.0
       y: 0.0

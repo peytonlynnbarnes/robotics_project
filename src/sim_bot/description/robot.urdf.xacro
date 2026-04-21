@@ -5,10 +5,12 @@
   <xacro:include filename="$(find sim_bot)/description/ros2_control.xacro"/>
   <xacro:include filename="$(find sim_bot)/description/gazebo_control_plugin.xacro"/>
   <xacro:include filename="$(find sim_bot)/description/lidar.xacro"/>
+  <xacro:include filename="$(find sim_bot)/description/imu.xacro"/>
 
   <xacro:robot_core/>
   <xacro:sim_bot_ros2_control/>
   <xacro:sim_bot_gazebo_control_plugin/>
   <xacro:sim_bot_lidar/>
+  <xacro:sim_bot_imu/>
 
 </robot>

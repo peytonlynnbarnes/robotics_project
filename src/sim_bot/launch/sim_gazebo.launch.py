@@ -114,13 +114,33 @@ def generate_launch_description():
         output='screen'
     )
 
+    # Bridge the IMU topic from Gazebo to ROS2 (one-way: gz -> ros)
+    imu_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        arguments=['/imu@sensor_msgs/msg/Imu[gz.msgs.IMU'],
+        output='screen'
+    )
+
+    # EKF fuses wheel odometry + IMU and publishes the odom -> base_link TF.
+    # diff_drive_controller has enable_odom_tf: false so this is the only publisher.
+    ekf_node = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[os.path.join(pkg_sim_bot, 'config', 'ekf.yaml')],
+    )
+
     return LaunchDescription([
         declare_world,
         gazebo,
         clock_bridge,
         lidar_bridge,
+        imu_bridge,
         rsp_launch,
         spawn_entity,
         delay_joint_state_broadcaster_after_spawn,
         delay_diff_drive_controller_after_jsb,
+        ekf_node,
     ])

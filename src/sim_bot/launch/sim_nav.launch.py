@@ -25,14 +25,13 @@ def generate_launch_description():
     )
     map_file = LaunchConfiguration('map')
 
-    # Gazebo simulation (uses house world by default)
     sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_sim_bot, 'launch', 'sim_gazebo.launch.py')
         )
     )
 
-    # --- Nav2 nodes (all lifecycle-managed by lifecycle_manager) ---
+    # --- Nav2 stack, all brought up by lifecycle_manager ---
 
     map_server = Node(
         package='nav2_map_server',
@@ -64,7 +63,17 @@ def generate_launch_description():
         name='controller_server',
         output='screen',
         parameters=[nav2_params_file],
-        remappings=[('cmd_vel', '/diff_drive_controller/cmd_vel')],
+        remappings=[('cmd_vel', '/cmd_vel_nav')],
+    )
+
+    # Nav2 publishes geometry_msgs/Twist; Jazzy's diff_drive_controller subscribes
+    # to geometry_msgs/TwistStamped. This relay bridges the two with a sim-time stamp.
+    cmd_vel_relay = Node(
+        package='sim_bot',
+        executable='cmd_vel_relay',
+        name='cmd_vel_relay',
+        output='screen',
+        parameters=[{'use_sim_time': True}],
     )
 
     behavior_server = Node(
@@ -122,4 +131,5 @@ def generate_launch_description():
         lifecycle_manager,
         rviz,
         waypoint_navigator,
+        cmd_vel_relay,
     ])
