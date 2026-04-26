@@ -18,11 +18,10 @@ import threading
 import rclpy
 from rclpy.node import Node
 
-from geometry_msgs.msg import Quaternion, TransformStamped
+from geometry_msgs.msg import Quaternion
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Int32MultiArray
-from tf2_ros import TransformBroadcaster
 
 
 # ---------------------------------------------------------------------------
@@ -83,9 +82,8 @@ class StepperOdomNode(Node):
         )
 
         # ---- publishers -------------------------------------------------------
-        self._odom_pub       = self.create_publisher(Odometry,   '/odom',         10)
-        self._joint_pub      = self.create_publisher(JointState, '/joint_states',  10)
-        self._tf_broadcaster = TransformBroadcaster(self)
+        self._odom_pub  = self.create_publisher(Odometry,   '/odom',         10)
+        self._joint_pub = self.create_publisher(JointState, '/joint_states',  10)
 
         self.create_timer(1.0 / publish_rate, self._publish_cb)
 
@@ -162,31 +160,25 @@ class StepperOdomNode(Node):
         odom.twist.twist.linear.x  = v_linear
         odom.twist.twist.angular.z = v_angular
 
-        # Diagonal pose covariance (row/col: x, y, z, roll, pitch, yaw)
+        # Pose covariance (row/col order: x, y, z, roll, pitch, yaw).
+        # EKF fuses odom0_config vx only — pose covariance is informational.
         odom.pose.covariance[0]  = 0.001   # x
         odom.pose.covariance[7]  = 0.001   # y
         odom.pose.covariance[14] = 1e6     # z     (planar — unused)
         odom.pose.covariance[21] = 1e6     # roll  (unused)
         odom.pose.covariance[28] = 1e6     # pitch (unused)
-        odom.pose.covariance[35] = 0.01    # yaw
+        odom.pose.covariance[35] = 1e6     # yaw   — EKF ignores, IMU owns this
 
-        odom.twist.covariance[0]  = 0.001  # vx
-        odom.twist.covariance[7]  = 1e6    # vy (non-holonomic — unused)
-        odom.twist.covariance[35] = 0.01   # vyaw
+        # Twist covariance — EKF fuses vx only (index 0).
+        # vyaw (index 35) set very high so EKF ignores it; IMU gyro owns yaw rate.
+        odom.twist.covariance[0]  = 0.001  # vx  ← only value EKF actually uses
+        odom.twist.covariance[7]  = 1e6    # vy  (non-holonomic — unused)
+        odom.twist.covariance[35] = 1e6    # vyaw — ignored, IMU owns it
 
         self._odom_pub.publish(odom)
 
-        # ---- odom → base_link TF ---------------------------------------------
-        # If ekf.yaml has publish_tf: true, comment this block out.
-        t = TransformStamped()
-        t.header.stamp    = now.to_msg()
-        t.header.frame_id = self._odom_frame
-        t.child_frame_id  = self._base_frame
-        t.transform.translation.x = x
-        t.transform.translation.y = y
-        t.transform.translation.z = 0.0
-        t.transform.rotation      = euler_to_quaternion(yaw)
-        self._tf_broadcaster.sendTransform(t)
+        # TF NOT broadcast here — ekf.yaml has publish_tf: true so EKF
+        # is the sole publisher of odom → base_link.
 
         # ---- JointState (RViz wheel rendering) --------------------------------
         wheel_radius = self._wheel_circ / (2.0 * math.pi)
