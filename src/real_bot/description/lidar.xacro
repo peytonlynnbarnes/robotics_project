@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find real_bot)/description/inertial_macros.xacro"/>
+
+  <xacro:macro name="real_bot_lidar">
+
+    <material name="lidar_black">
+      <color rgba="0.05 0.05 0.05 1"/>
+    </material>
+
+    <!-- Hokuyo URG-style 2D scanner mounted on the front-top of the chassis.
+         180° forward-facing, 0° = +x (forward). The driver (urg_node) publishes
+         on /scan with frame_id "laser_frame" (set via the driver's ~laser_frame_id
+         param in the launch file). -->
+    <joint name="laser_joint" type="fixed">
+      <parent link="chassis"/>
+      <child link="laser_frame"/>
+      <origin xyz="0.11 0 0.27" rpy="0 0 0"/>
+    </joint>
+
+    <link name="laser_frame">
+      <visual>
+        <origin xyz="0 0 0.025"/>
+        <geometry>
+          <box size="0.06 0.06 0.05"/>
+        </geometry>
+        <material name="lidar_black"/>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0.025"/>
+        <geometry>
+          <box size="0.06 0.06 0.05"/>
+        </geometry>
+      </collision>
+
+      <xacro:inertial_box mass="0.16" x="0.06" y="0.06" z="0.05"/>
+    </link>
+
+  </xacro:macro>
+
+</robot>

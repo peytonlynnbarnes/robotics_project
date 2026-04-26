@@ -1,0 +1,11 @@
+waypoint_navigator:
+  ros__parameters:
+    # Fill these in once you've SLAM'd the real space and know the map-frame
+    # coordinates. Send a target with: ros2 topic pub --once /go_to_room \
+    #   std_msgs/msg/String "{data: 'origin'}"
+    waypoint_names: [origin]
+
+    origin:
+      x: 0.0
+      y: 0.0
+      yaw: 0.0
