@@ -1,0 +1,37 @@
+{
+  "name": "ROS 2 Jazzy",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+
+  "workspaceFolder": "/ros2_ws",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/ros2_ws/src/robotics_project,type=bind",
+
+  "mounts": [
+    "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind,consistency=cached"
+  ],
+
+  "containerEnv": {
+    "DISPLAY": "${localEnv:DISPLAY}",
+    "ROS_DOMAIN_ID": "0"
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-iot.vscode-ros",
+        "twxs.cmake",
+        "ms-vscode.cmake-tools"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+
+  "postCreateCommand": "cd /ros2_ws && rosdep update && rosdep install --from-paths src --ignore-src -r -y",
+
+  "remoteUser": "root"
+}

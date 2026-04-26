@@ -27,6 +27,7 @@ install(
 
 install(
   PROGRAMS scripts/waypoint_navigator.py
+  PROGRAMS scripts/stepper_odom.py
   DESTINATION lib/${PROJECT_NAME}
   RENAME waypoint_navigator
 )
