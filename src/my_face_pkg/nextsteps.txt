@@ -1,0 +1,5 @@
+it publishes recognized faces to /face_recognition/results
+
+just need to make a node that compares whether or not the request name matches a 
+name in results and send a signal to open container if so
+
