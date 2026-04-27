@@ -75,21 +75,10 @@ def generate_launch_description():
         }],
     )
 
-    ekf_node = Node(
-        package='robot_localization',
-        executable='ekf_node',
-        name='ekf_filter_node',
-        output='screen',
-        parameters=[os.path.join(pkg_real_bot, 'config', 'ekf.yaml'),
-            {'tf_buffer_duration': 30.0},
-        ],
-    )
-
     return LaunchDescription([
         declare_lidar_port,
         rsp_launch,
         joint_state_publisher,
         stepper_odom,
         urg_node,
-        ekf_node,
     ])
