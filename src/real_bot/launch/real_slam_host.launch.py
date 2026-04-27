@@ -1,11 +1,17 @@
-"""Real-robot SLAM: bringup + slam_toolbox (lifecycle) + RViz."""
+"""Host-side SLAM: slam_toolbox + RViz only.
+
+Companion to real_bringup_dr.launch.py running on the Pi. The Pi publishes
+/scan, /tf, /tf_static, /odom; this launch consumes them over the network
+and produces /map + map -> odom TF.
+
+Make sure ROS_DOMAIN_ID matches the Pi and discovery is reachable.
+"""
 import os
 
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import EmitEvent, IncludeLaunchDescription, RegisterEventHandler
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import EmitEvent, RegisterEventHandler
 
 from launch_ros.actions import LifecycleNode, Node
 from launch_ros.event_handlers import OnStateTransition
@@ -20,12 +26,6 @@ def generate_launch_description():
 
     slam_params_file = os.path.join(pkg_real_bot, 'config', 'slam_params.yaml')
     rviz_config_file = os.path.join(pkg_real_bot, 'config', 'slam.rviz')
-
-    bringup = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(pkg_real_bot, 'launch', 'real_bringup.launch.py')
-        )
-    )
 
     slam = LifecycleNode(
         package='slam_toolbox',
@@ -76,4 +76,3 @@ def generate_launch_description():
         emit_activate,
         rviz,
     ])
-
