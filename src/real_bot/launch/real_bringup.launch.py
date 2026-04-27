@@ -55,7 +55,8 @@ def generate_launch_description():
         package='real_bot',
         executable='stepper_odom',
         name='stepper_odom',
-        output='screen'
+        output='screen',
+        parameters=[{'publish_rate': 10.0}],  # ← add this line
     )
 
     # Hokuyo driver. Older non-lifecycle urg_node binary.
