@@ -21,7 +21,7 @@ from rclpy.node import Node
 from geometry_msgs.msg import Quaternion
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Int32
 
 
 # ---------------------------------------------------------------------------
@@ -76,9 +76,16 @@ class StepperOdomNode(Node):
         self._v_angular   = 0.0
         self._last_time   = self.get_clock().now()
 
-        # ---- subscriber -------------------------------------------------------
-        self._stepper_sub = self.create_subscription(
-            Int32MultiArray, '/stepper', self._stepper_cb, 10
+        # ---- latest step counts (written by sub callbacks, read by timer) ----
+        self._left_steps_buf  = 0
+        self._right_steps_buf = 0
+
+        # ---- subscribers -------------------------------------------------------
+        self._left_sub = self.create_subscription(
+            Int32, '/stepperLeft', self._left_cb, 10
+        )
+        self._right_sub = self.create_subscription(
+            Int32, '/stepperRight', self._right_cb, 10
         )
 
         # ---- publishers -------------------------------------------------------
@@ -95,27 +102,43 @@ class StepperOdomNode(Node):
         )
 
     # -------------------------------------------------------------------------
-    # /stepper callback — integrate pose on every incoming step batch
+    # /stepperLeft and /stepperRight callbacks
     # -------------------------------------------------------------------------
 
-    def _stepper_cb(self, msg: Int32MultiArray):
-        if len(msg.data) < 2:
-            self.get_logger().warn(
-                f'/stepper has {len(msg.data)} elements, expected 2 — ignoring.'
-            )
-            return
+    def _left_cb(self, msg: Int32):
+        with self._lock:
+            self._left_steps_buf = int(msg.data)
+        self._integrate()
 
-        now         = self.get_clock().now()
-        left_steps  = int(msg.data[0])
-        right_steps = int(msg.data[1])
+    def _right_cb(self, msg: Int32):
+        with self._lock:
+            self._right_steps_buf = int(msg.data)
+        self._integrate()
 
-        d_left  = left_steps  * self._metres_per_step
-        d_right = right_steps * self._metres_per_step
+    def _integrate(self):
+        """Integrate whatever step counts are currently buffered into pose.
 
-        d_centre = (d_right + d_left)  / 2.0
-        d_yaw    = (d_right - d_left)  / self._wheelbase
+        Called on every incoming message from either wheel. Because the two
+        topics are published independently, we integrate each new count
+        immediately rather than waiting for both to arrive together.
+        """
+        now = self.get_clock().now()
 
         with self._lock:
+            left_steps  = self._left_steps_buf
+            right_steps = self._right_steps_buf
+            self._left_steps_buf  = 0
+            self._right_steps_buf = 0
+
+            if left_steps == 0 and right_steps == 0:
+                return
+
+            d_left  = left_steps  * self._metres_per_step
+            d_right = right_steps * self._metres_per_step
+
+            d_centre = (d_right + d_left)  / 2.0
+            d_yaw    = (d_right - d_left)  / self._wheelbase
+
             dt = (now - self._last_time).nanoseconds * 1e-9
             self._last_time = now
 
@@ -206,3 +229,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+    
