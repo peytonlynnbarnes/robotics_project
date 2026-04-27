@@ -1,0 +1,11 @@
+ros@ros-desktop:~$ id
+uid=1000(ros) gid=1000(ros) groups=1000(ros),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),100(users),113(lpadmin),123(sambashare)
+ros@ros-desktop:~$ sudo usermod -aG dialout ros
+[sudo] password for ros: 
+ros@ros-desktop:~$ groups
+ros adm cdrom sudo dip plugdev users lpadmin sambashare
+ros@ros-desktop:~$ sudo chmod 666 /dev/ttyACM0
+ros@ros-desktop:~$ ros2 run urg_node urg_node_driver --ros-args -p serial_port:=/dev/ttyACM0 -p serial_baud:=115200
+[INFO] [1777070476.058275942] [urg_node]: Connected to serial device with ID: H1205144
+[INFO] [1777070477.159382413] [urg_node]: Streaming data.
+^C[INFO] [1777070486.635945399] [rclcpp]: signal_handler(SIGINT/SIGTERM)

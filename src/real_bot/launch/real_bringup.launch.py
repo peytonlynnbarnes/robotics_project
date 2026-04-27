@@ -33,11 +33,6 @@ def generate_launch_description():
         default_value='/dev/ttyACM0',
         description='Serial device for USB Hokuyo. Ignored if lidar_ip_address is set.',
     )
-    declare_lidar_ip = DeclareLaunchArgument(
-        'lidar_ip_address',
-        default_value='',
-        description='IP address for ethernet Hokuyo (e.g. 192.168.0.10). Empty = use serial.',
-    )
 
     rsp_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -56,6 +51,13 @@ def generate_launch_description():
         parameters=[{'use_sim_time': False}],
     )
 
+    stepper_odom = Node(
+        package='real_bot',
+        executable='stepper_odom',
+        name='stepper_odom',
+        output='screen'
+    )
+
     # Hokuyo driver. Older non-lifecycle urg_node binary.
     # For USB Hokuyos (URG-04LX-UG01, etc.) use serial_port. For ethernet Hokuyos
     # (UST-10LX, UST-20LX) set lidar_ip_address:=192.168.0.10 (or your bot's IP).
@@ -66,7 +68,6 @@ def generate_launch_description():
         output='screen',
         parameters=[{
             'serial_port': LaunchConfiguration('lidar_serial_port'),
-            'ip_address': LaunchConfiguration('lidar_ip_address'),
             'laser_frame_id': 'laser_frame',
             'angle_min': -1.5708,
             'angle_max':  1.5708,
@@ -83,9 +84,9 @@ def generate_launch_description():
 
     return LaunchDescription([
         declare_lidar_port,
-        declare_lidar_ip,
         rsp_launch,
         joint_state_publisher,
+        stepper_odom,
         urg_node,
         ekf_node,
     ])
