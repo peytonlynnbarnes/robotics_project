@@ -23,7 +23,7 @@ ekf_filter_node:
                    false, false, false]
     odom0_differential: false
     odom0_relative: false
-    odom0_queue_size: 10
+    odom0_queue_size: 5
 
     # IMU on /imu/data — trust gyro yaw rate (vyaw) only.
     # Gyro+accel only (no magnetometer) — orientation absolute is unreliable, so
@@ -36,5 +36,5 @@ ekf_filter_node:
                   false, false, false]
     imu0_differential: false
     imu0_relative: false
-    imu0_queue_size: 10
+    imu0_queue_size: 3
     imu0_remove_gravitational_acceleration: false

@@ -71,6 +71,7 @@ def generate_launch_description():
             'laser_frame_id': 'laser_frame',
             'angle_min': -1.5708,
             'angle_max':  1.5708,
+            'laser_max_range': 5.5,
         }],
     )
 
@@ -79,7 +80,9 @@ def generate_launch_description():
         executable='ekf_node',
         name='ekf_filter_node',
         output='screen',
-        parameters=[os.path.join(pkg_real_bot, 'config', 'ekf.yaml')],
+        parameters=[os.path.join(pkg_real_bot, 'config', 'ekf.yaml'),
+            {'tf_buffer_duration': 30.0},
+        ],
     )
 
     return LaunchDescription([
