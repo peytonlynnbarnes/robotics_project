@@ -23,10 +23,11 @@ import threading
 import rclpy
 from rclpy.node import Node
 
-from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Quaternion, TransformStamped
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Int32
+from tf2_ros import TransformBroadcaster
 
 
 def euler_to_quaternion(yaw: float) -> Quaternion:
@@ -50,6 +51,7 @@ class StepperOdomNode(Node):
         self.declare_parameter('publish_rate',   50.0)
         self.declare_parameter('odom_frame',     'odom')
         self.declare_parameter('base_frame',     'base_link')
+        self.declare_parameter('publish_tf',     False)
 
         wheel_diameter      = self.get_parameter('wheel_diameter').value
         self._wheelbase     = self.get_parameter('wheelbase').value
@@ -57,6 +59,7 @@ class StepperOdomNode(Node):
         publish_rate        = self.get_parameter('publish_rate').value
         self._odom_frame    = self.get_parameter('odom_frame').value
         self._base_frame    = self.get_parameter('base_frame').value
+        self._publish_tf    = self.get_parameter('publish_tf').value
 
         self._wheel_circ      = math.pi * wheel_diameter
         self._metres_per_step = self._wheel_circ / steps_per_rev
@@ -82,6 +85,7 @@ class StepperOdomNode(Node):
         # ---- publishers -------------------------------------------------------
         self._odom_pub  = self.create_publisher(Odometry,   '/odom',        10)
         self._joint_pub = self.create_publisher(JointState, '/joint_states', 10)
+        self._tf_bcast  = TransformBroadcaster(self) if self._publish_tf else None
 
         # ---- timer — all integration and publishing happens here --------------
         self.create_timer(1.0 / publish_rate, self._timer_cb)
@@ -175,7 +179,17 @@ class StepperOdomNode(Node):
 
         self._odom_pub.publish(odom)
 
-        # TF not broadcast here — EKF owns odom→base_link (publish_tf: true)
+        # ---- odom → base_link TF (only when no EKF is running) --------------
+        if self._tf_bcast is not None:
+            t = TransformStamped()
+            t.header.stamp            = now.to_msg()
+            t.header.frame_id         = self._odom_frame
+            t.child_frame_id          = self._base_frame
+            t.transform.translation.x = x
+            t.transform.translation.y = y
+            t.transform.translation.z = 0.0
+            t.transform.rotation      = euler_to_quaternion(yaw)
+            self._tf_bcast.sendTransform(t)
 
         # ---- /joint_states ---------------------------------------------------
         wheel_radius = self._wheel_circ / (2.0 * math.pi)
