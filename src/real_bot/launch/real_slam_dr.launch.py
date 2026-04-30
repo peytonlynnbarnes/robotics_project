@@ -1,67 +1,32 @@
-"""Real-robot SLAM, dead-reckoning variant: bringup_dr + slam_toolbox + RViz.
+"""Real-robot dead-reckoning bringup + RViz.
 
-No EKF. odom -> base_link comes from stepper_odom; map -> odom comes from
-slam_toolbox.
+slam_toolbox has been removed — run it on the host with
+  ros2 launch real_bot real_slam_simple.launch.py
+which talks to this Pi-side bringup over the network.
+
+odom -> base_link comes from stepper_odom; map -> odom comes from
+slam_toolbox running on the host.
 """
 import os
 
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch.actions import EmitEvent, IncludeLaunchDescription, RegisterEventHandler
+from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
-from launch_ros.actions import LifecycleNode, Node
-from launch_ros.event_handlers import OnStateTransition
-from launch_ros.events.lifecycle import ChangeState
-
-from lifecycle_msgs.msg import Transition
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
 
     pkg_real_bot = get_package_share_directory('real_bot')
 
-    slam_params_file = os.path.join(pkg_real_bot, 'config', 'slam_params.yaml')
     rviz_config_file = os.path.join(pkg_real_bot, 'config', 'slam.rviz')
 
     bringup = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_real_bot, 'launch', 'real_bringup_dr.launch.py')
-        )
-    )
-
-    slam = LifecycleNode(
-        package='slam_toolbox',
-        executable='async_slam_toolbox_node',
-        name='slam_toolbox',
-        namespace='',
-        output='screen',
-        parameters=[
-            slam_params_file,
-            {'use_sim_time': False},
-        ],
-    )
-
-    emit_configure = EmitEvent(
-        event=ChangeState(
-            lifecycle_node_matcher=lambda node: node == slam,
-            transition_id=Transition.TRANSITION_CONFIGURE,
-        )
-    )
-
-    emit_activate = RegisterEventHandler(
-        OnStateTransition(
-            target_lifecycle_node=slam,
-            goal_state='inactive',
-            entities=[
-                EmitEvent(
-                    event=ChangeState(
-                        lifecycle_node_matcher=lambda node: node == slam,
-                        transition_id=Transition.TRANSITION_ACTIVATE,
-                    )
-                )
-            ],
         )
     )
 
@@ -76,8 +41,5 @@ def generate_launch_description():
 
     return LaunchDescription([
         bringup,
-        slam,
-        emit_configure,
-        emit_activate,
         rviz,
     ])
