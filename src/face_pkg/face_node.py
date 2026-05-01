@@ -20,7 +20,6 @@ class FaceNode(Node):
             self.get_logger().info("Navigation moving. Starting face recognition...")
             vision = DeliveryVision(self.target_person, speak)
             if vision.run():
-                speak(f"{self.target_person} verified.")
                 self.verified_pub.publish(String(data="verified"))
                 self.get_logger().info("{self.target_person} verified!")
 
