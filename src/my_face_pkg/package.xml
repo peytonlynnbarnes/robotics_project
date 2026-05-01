@@ -1,8 +1,0 @@
-<package format="3">
-  <name>my_face_pkg</name>
-  <version>0.0.1</version>
-  <depend>rclpy</depend>
-  <depend>sensor_msgs</depend>
-  <depend>std_msgs</depend>
-  <depend>cv_bridge</depend>
-</package>
